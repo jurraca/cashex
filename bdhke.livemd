@@ -203,7 +203,7 @@ Step 1 is for the user/customer to have two secret values:
 From the blinding factor and the secret message, the `step1_alice` function creates a _blinded point_ and returns the blinding factor. The `blinded_point` is a point on the secp256k1 curve of type `%Point{x: x, y: y}`.
 
 ```elixir
-{blinded_point, blinding_fact} = Cashu.step1_alice("my message")
+{blinded_point, blinding_factor} = Cashu.step1_alice("my message")
 ```
 
 Bob has a private key too.
@@ -228,11 +228,11 @@ Bob also creates DLEQ proofs for his signature: scalars `e` and `s` (we'll cover
 This point `c_` is the crux of the whole key exchange.  
 What Alice can do is "unblind" this point to reveal a point only she can know, if she is actually the one who created the original `blinded_point`. We call this `unblinded_point`; it's sometimes called  `c` since it's the unblinded version of `c_`.
 
-Below Alice takes `a_point`, i.e. Bob's public key, and unblinds the `c_` point with her `blinding_factor` from earlier.
+Below Alice takes `bob_pubkey`, i.e. Bob's public key, and unblinds the `c_` point with her `blinding_factor` from earlier.
 
 ```elixir
-a_point = Bitcoinex.Secp256k1.PrivateKey.to_point(bob_privkey)
-unblinded_point = Cashu.step3_alice(c_, blinding_fact, a_point)
+bob_pubkey = Bitcoinex.Secp256k1.PrivateKey.to_point(bob_privkey)
+unblinded_point = Cashu.step3_alice(c_, blinding_factor, bob_pubkey)
 ```
 
 #### Redemption
@@ -246,11 +246,11 @@ Bob uses his private key to check that the `unblinded_point` corresponds to the 
 Revealing the secret message doesn't reveal the `blinding_factor` thanks to elliptic curve addition being non reversible.
 
 ```elixir
-Cashu.is_valid?(bob_privkey, unblinded_point, "churn has come")
+Cashu.is_valid?(bob_privkey, unblinded_point, "my message")
 ```
 
 #### Validating DLEQ proofs
 
 ```elixir
-Cashu.alice_verify_dleq(blinded_point, c_, e, s, a_point)
+Cashu.alice_verify_dleq(blinded_point, c_, e, s, bob_pubkey)
 ```
