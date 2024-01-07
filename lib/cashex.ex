@@ -1,0 +1,2 @@
+defmodule Cashu do
+end
