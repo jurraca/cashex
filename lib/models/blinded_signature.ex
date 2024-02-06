@@ -6,6 +6,7 @@ defmodule Cashu.BlindedSignature do
   alias Cashu.{BDHKE, Error, Validator}
   alias Bitcoinex.Secp256k1.Point
 
+  @derive Jason.Encoder
   defstruct [:amount, :id, :c_]
 
   def new(blinded_message, mint_privkey) do
@@ -14,7 +15,9 @@ defmodule Cashu.BlindedSignature do
         # id = get_keyset_id()
         hex_c_ = Point.serialize_public_key(commitment_point)
         %__MODULE__{amount: blinded_message.amount, id: nil, c_: hex_c_}
-      {:error, reason} -> Error.new(reason)
+
+      {:error, reason} ->
+        Error.new(reason)
     end
   end
 

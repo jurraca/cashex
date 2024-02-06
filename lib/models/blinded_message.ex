@@ -6,6 +6,7 @@ defmodule Cashu.BlindedMessage do
   alias Cashu.{BDHKE, Error, Validator}
   alias Bitcoinex.Secp256k1.Point
 
+  @derive Jason.Encoder
   defstruct [:amount, :id, :b_]
 
   def new(amount, secret_message) when is_integer(amount) and is_binary(secret_message) do
@@ -13,7 +14,9 @@ defmodule Cashu.BlindedMessage do
       {:ok, blind_point, blinding_factor} ->
         hex_point = Point.serialize_public_key(blind_point)
         %__MODULE__{amount: amount, id: nil, b_: hex_point}
-      {:error, reason} -> Error.new(reason)
+
+      {:error, reason} ->
+        Error.new(reason)
     end
   end
 

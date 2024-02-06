@@ -145,7 +145,7 @@ defmodule Cashu.BDHKE do
   def negate_hex("03" <> rest), do: {:ok, "02" <> rest}
   def negate_hex(pubkey), do: {:error, "pubkey prefix did not match 02 or 03, got #{pubkey}"}
 
-  def hash_pubkeys(pubkeys) do
+  def hash_pubkeys(pubkeys) when is_list(pubkeys) do
     pubkeys
     |> Enum.map(&Point.serialize_public_key(&1))
     |> Enum.join()

@@ -1,5 +1,4 @@
 defmodule Cashu.Keyset do
-
   defstruct [:id, :unit, :active]
 
   alias Bitcoinex.Secp256k1.Point
@@ -9,7 +8,8 @@ defmodule Cashu.Keyset do
   @keyset_version "00"
 
   def derive_keyset_id(keys) when is_map(keys) do
-    pubkey_concat = keys
+    pubkey_concat =
+      keys
       |> Map.values()
       |> Enum.map(&Point.serialize_public_key(&1))
       |> Enum.join()
@@ -18,6 +18,5 @@ defmodule Cashu.Keyset do
   end
 
   def validate(%__MODULE__{id: id, unit: unit, active: active}) do
-
   end
 end

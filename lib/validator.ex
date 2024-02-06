@@ -8,7 +8,7 @@ defmodule Cashu.Validator do
   def validate_amount(amount) when is_integer(amount) and amount >= 0, do: {:ok, amount}
   def validate_amount(_), do: {:error, "Invalid amount"}
 
-  def validate_id(id) when is_binary(id) and byte_size(id) == 32, do: {:ok, id}
+  def validate_id(id) when is_binary(id), do: {:ok, id}
   def validate_id(_), do: {:error, "Invalid ID"}
 
   def validate_b_(b_) when is_binary(b_), do: {:ok, b_}
@@ -38,7 +38,9 @@ defmodule Cashu.Validator do
 
   def validate_tokens_list(tokens) do
     tokens
-    |> Task.async_stream(fn %{mint: mint_url, proofs: proofs} ->
+    |> Enum.map(fn items ->
+      %{mint: mint_url, proofs: proofs} = items
+
       if is_valid_url?(mint_url) do
         validate_proofs(proofs)
       else
@@ -46,17 +48,37 @@ defmodule Cashu.Validator do
       end
     end)
     |> Enum.reduce([], fn
-        {:ok, _}, acc -> acc
-        {:error, _} = err, acc -> [ err | acc]
+      {:ok, _}, acc -> acc
+      {:error, _} = err, acc -> [err | acc]
     end)
+    |> Enum.all?(fn x -> elem(x, 0) == :ok end)
   end
 
   def validate_proofs(list, acc \\ [])
   def validate_proofs([], acc), do: {:ok, acc}
+
   def validate_proofs([head | tail], acc) do
     case Proof.validate(head) do
       {:ok, %{id: proof_id}} -> validate_proofs(tail, [proof_id | acc])
-      {:error, reason} -> Error.new(reason)
+      {:error, _reason} = err -> err
     end
+  end
+
+  @doc """
+  take a string key map, and a target struct, and try to add its values to the matching struct fields.
+  """
+  def map_string_to_atom(source_map, target_struct) do
+    source_keys = Map.keys(source_map)
+    target_keys = Map.keys(target_struct)
+
+    Enum.reduce(source_keys, target_struct, fn k, acc ->
+      atom_key = String.to_atom(k)
+
+      if atom_key in target_keys do
+        Map.put(acc, atom_key, Map.get(source_map, k))
+      else
+        acc
+      end
+    end)
   end
 end

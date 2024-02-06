@@ -13,8 +13,9 @@ defmodule Cashu.Error do
   # a generic case to passthrough the ok result and handle the error.
   def check(result) do
     case result do
-      {:ok, _} = ok -> ok  # passthru ok result
-      {:error, reason} -> new( reason)
+      # passthru ok result
+      {:ok, _} = ok -> ok
+      {:error, reason} -> new(reason)
     end
   end
 end

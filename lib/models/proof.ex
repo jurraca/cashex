@@ -6,23 +6,26 @@ defmodule Cashu.Proof do
   alias Cashu.{BDHKE, Error, Validator}
   alias Bitcoinex.Secp256k1.Point
 
-  defstruct [:amount, :id, :secret, :c]
+  @derive Jason.Encoder
+  defstruct [:amount, :id, :secret, :C]
 
   def new(c_, secret, amount, mint_pubkey) do
     case BDHKE.generate_proof(c_, secret, mint_pubkey) do
       {:ok, %Point{} = c} ->
         # id = get_keyset_id()
         hex_c = Point.serialize_public_key(c)
-        %__MODULE__{amount: amount, id: nil, secret: secret, c: hex_c}
-      {:error, reason} -> Error.new(reason)
+        %__MODULE__{amount: amount, id: nil, secret: secret, C: hex_c}
+
+      {:error, reason} ->
+        Error.new(reason)
     end
   end
 
-  def validate(%__MODULE__{amount: amount, id: id, secret: secret, c: c} = proof) do
-    with :ok <- Validator.validate_amount(amount),
-         :ok <- Validator.validate_id(id),
-         :ok <- Validator.validate_secret(secret),
-         :ok <- Validator.validate_c(c) do
+  def validate(%__MODULE__{amount: amount, id: id, secret: secret, C: c} = proof) do
+    with {:ok, _} <- Validator.validate_amount(amount),
+         {:ok, _} <- Validator.validate_id(id),
+         {:ok, _} <- Validator.validate_secret(secret),
+         {:ok, _} <- Validator.validate_c(c) do
       {:ok, proof}
     else
       {:error, reason} -> Error.new(reason)
