@@ -3,32 +3,41 @@ defmodule Cashu.Token do
     cashu[version][base64_token_json]
   """
   alias Cashu.{Error, Proof, Validator}
+  require Logger
 
   @derive Jason.Encoder
   defstruct [:token, :unit, :memo]
 
-  def serialize(%__MODULE__{} = token, version \\ "A") do
-    serialized =
-      token
-      |> encode()
-      |> Base.url_encode64(padding: false)
+  @type token() :: %{
+    token: [ %{ mint: String.t(), proofs: [Proof.t]}],
+    unit: String.t() | nil,
+    memo: String.t() | nil
+  }
 
-    "cashu" <> version <> serialized
+  def serialize(token, version \\ "A") do
+      case encode(token) do
+      {:ok, encoded} ->
+        serialized = Base.url_encode64(encoded, padding: false)
+        {:ok, "cashu" <> version <> serialized}
+      {:error, err} -> Error.new(err)
+      end
   end
 
-  def encode(%__MODULE__{token: token_list, unit: unit, memo: memo} = token) do
+  def encode(%{token: token_list, unit: unit, memo: memo} = token) do
     with true <- Validator.validate_tokens_list(token_list),
          true <- Validator.is_valid_unit?(unit),
          true <- Validator.is_valid_memo?(memo) do
       Jason.encode(token) |> Error.check()
     else
+      false -> {:error, "validation error on given Token"}
       errors -> handle_errors(errors)
     end
   end
 
   def decode(<<"cashu", version::binary-size(1), token::binary>>) do
+    Logger.info("Got cashu token version #{version}")
     case Base.url_decode64(token, padding: false) do
-      {:ok, json} -> json |> Jason.decode()
+      {:ok, json} -> Jason.decode(json)
       :error -> Error.new("could not decode token from binary #{token}")
     end
   end
@@ -58,6 +67,9 @@ defmodule Cashu.Token do
   def handle_errors(errors) do
     if Enum.count(errors) > 0 do
       {:error, errors}
+    else
+      Logger.error("Unknown error")
+      {:error, nil}
     end
   end
 end

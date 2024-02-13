@@ -9,6 +9,14 @@ defmodule Cashu.Proof do
   @derive Jason.Encoder
   defstruct [:amount, :id, :secret, :C]
 
+  @type proof() :: %{
+    amount: integer(),
+    id: String.t(),
+    secret: String.t(),
+    C: String.t()
+  }
+ 
+  @spec new(String.t(), String.t(), integer(), String.t()) :: proof() | Error.t()
   def new(c_, secret, amount, mint_pubkey) do
     case BDHKE.generate_proof(c_, secret, mint_pubkey) do
       {:ok, %Point{} = c} ->
