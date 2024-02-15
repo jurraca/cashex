@@ -10,7 +10,7 @@ defmodule Cashu.Error do
     {:error, %__MODULE__{detail: reason, code: 0}}
   end
 
-  # a generic case to passthrough the ok result and handle the error.
+  # a generic case to passthrough the ok result and create the error.
   def check(result) do
     case result do
       # passthru ok result

@@ -1,6 +1,9 @@
 defmodule Cashu.Validator do
   @moduledoc """
   Validator functions for cashu data fields.
+
+  All functions in this module should return an :ok or :error tuple.
+  Cashu.Error return values are constructed upstream, usually from these error values.
   """
 
   alias Cashu.{Error, Proof}
@@ -23,45 +26,52 @@ defmodule Cashu.Validator do
   def validate_c_(c_) when is_binary(c_), do: {:ok, c_}
   def validate_c_(_), do: {:error, "Invalid c_"}
 
-  def is_valid_unit?("sat"), do: true
-  def is_valid_unit?(_), do: false
+  def validate_unit("sat"), do: {:ok, "sat"}
+  def validate_unit?(_), do: {:error, "Invalid currency unit: sats only bb"}
 
-  def is_valid_memo?(memo), do: is_binary(memo)
+  def validate_memo(memo) when is_binary(memo), do: {:ok, memo}
+  def validate_memo(_), do: {:error, "Invalid memo: not a string"}
 
-  def is_valid_url?(mint_url) do
+  def validate_url(mint_url) do
     case URI.parse(mint_url) do
-      %URI{host: nil} -> false
-      %URI{scheme: "https", host: _host} -> true
-      %URI{scheme: nil} -> false
+      %URI{host: nil} -> {:error, "invalid mint URL"}
+      %URI{scheme: "https", host: host} -> {:ok, host}
+      %URI{scheme: nil} -> {:error, "no http scheme provided"}
+      _ -> {:error, "could not parse mint URL"}
     end
   end
 
-  def validate_tokens_list(tokens) do
+  def validate_token_list(tokens) do
     tokens
     |> Enum.map(fn items ->
-      %{mint: mint_url, proofs: proofs} = items
+      %{"mint" => mint_url, "proofs" => proofs} = items
 
-      if is_valid_url?(mint_url) do
-        validate_proofs(proofs)
-      else
-        {:error, "Invalid mint url, got #{mint_url}"}
+      case validate_url(mint_url) do
+        {:error, reason} -> Error.new(reason)
+        {:ok, _} ->
+          case  validate_proofs(proofs) do
+            %{error: errors} -> {:error, errors}
+            %{ok: valid_proofs} -> {:ok, valid_proofs}
+            _ -> {:error, "bad return"}
+          end
       end
     end)
-    |> Enum.reduce([], fn
-      {:ok, _}, acc -> acc
-      {:error, _} = err, acc -> [err | acc]
-    end)
-    |> Enum.all?(fn x -> elem(x, 0) == :ok end)
   end
 
-  def validate_proofs(list, acc \\ [])
-  def validate_proofs([], acc), do: {:ok, acc}
+  def validate_proofs(list, acc \\ %{})
+  def validate_proofs([], acc), do: acc
 
   def validate_proofs([head | tail], acc) do
-    case Proof.validate(head) do
-      {:ok, %{id: proof_id}} -> validate_proofs(tail, [proof_id | acc])
-      {:error, _reason} = err -> err
-    end
+    new_acc = head
+      |> Proof.validate()
+      |> collect_proof_results(acc)
+
+    validate_proofs(tail, new_acc)
+  end
+
+  defp collect_proof_results({key, value}, acc) do
+    new_list = [ value | Map.get(acc, key) ]
+    Map.put(acc, key, new_list)
   end
 
   @doc """

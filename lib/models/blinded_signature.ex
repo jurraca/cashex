@@ -22,9 +22,9 @@ defmodule Cashu.BlindedSignature do
   end
 
   def validate(%__MODULE__{amount: amount, id: id, c_: c_} = sig) do
-    with :ok <- Validator.validate_amount(amount),
-         :ok <- Validator.validate_id(id),
-         :ok <- Validator.validate_c_(c_) do
+    with {:ok, _} <- Validator.validate_amount(amount),
+         {:ok, _} <- Validator.validate_id(id),
+         {:ok, _} <- Validator.validate_c_(c_) do
       {:ok, sig}
     else
       {:error, reason} -> Error.new(reason)

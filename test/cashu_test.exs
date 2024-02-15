@@ -40,7 +40,8 @@ defmodule CashuTest do
       serialized_token: serialized_token,
       token: token
     } do
-      {:ok, deserialized} = Cashu.Token.decode(serialized_token)
+      {:ok, token_map} = Cashu.Token.decode(serialized_token)
+      deserialized = Cashu.Token.new(token_map)
       assert deserialized == token
     end
   end
@@ -48,12 +49,13 @@ defmodule CashuTest do
   describe "Error handling" do
     test "returns an error struct when an error occurs" do
       error_detail = "oops"
-      error_code = 1337
+      #error_code = 1337
 
-      assert Cashu.new(error_detail, error_code) == %Cashu.Error{
+      assert Cashu.Error.new(error_detail) == {:error, %Cashu.Error{
                detail: "oops",
-               code: 1337
+               code: 0
              }
+            }
     end
   end
 end

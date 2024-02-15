@@ -14,6 +14,25 @@ defmodule Cashu.Token do
     memo: String.t() | nil
   }
 
+  def new(tokens_list, unit, memo \\ "") do
+    with {:ok, _valid_proofs} <- Validator.validate_token_list(tokens_list),
+      {:ok, _} <- Validator.is_valid_unit?(unit),
+      {:ok, _} <- Validator.is_valid_memo?(memo) do
+        %__MODULE__{
+          token: tokens_list,
+          unit: unit,
+          memo: memo
+        }
+    else
+      {:error, error} -> if(is_list(error), do: handle_errors(error), else: Error.new(error))
+      err -> err
+    end
+  end
+
+  def new(%{"token" => tokens_list, "unit" => unit, "memo" => memo}) do
+    new(tokens_list, unit, memo)
+  end
+
   def serialize(token, version \\ "A") do
       case encode(token) do
       {:ok, encoded} ->
@@ -23,15 +42,8 @@ defmodule Cashu.Token do
       end
   end
 
-  def encode(%{token: token_list, unit: unit, memo: memo} = token) do
-    with true <- Validator.validate_tokens_list(token_list),
-         true <- Validator.is_valid_unit?(unit),
-         true <- Validator.is_valid_memo?(memo) do
+  def encode(%__MODULE__{} = token) do
       Jason.encode(token) |> Error.check()
-    else
-      false -> {:error, "validation error on given Token"}
-      errors -> handle_errors(errors)
-    end
   end
 
   def decode(<<"cashu", version::binary-size(1), token::binary>>) do
@@ -65,11 +77,12 @@ defmodule Cashu.Token do
   end
 
   def handle_errors(errors) do
-    if Enum.count(errors) > 0 do
-      {:error, errors}
+    if Enum.count(errors) > 1 do
+      Enum.map(errors, fn err -> Logger.error(err) end)
+      {:error, "Multiple proof validation errors received, see logs."}
     else
-      Logger.error("Unknown error")
-      {:error, nil}
+      Logger.error(errors)
+      {:error, Enum.at(errors, 0)}
     end
   end
 end
