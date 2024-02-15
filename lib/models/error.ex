@@ -4,7 +4,7 @@ defmodule Cashu.Error do
 
   defstruct [:detail, :code]
 
-  @spec new(String.t()) :: error
+  @spec new(String.t()) :: error()
   def new(reason) when is_binary(reason) do
     # get_error_code(error)
     {:error, %__MODULE__{detail: reason, code: 0}}
