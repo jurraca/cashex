@@ -1,13 +1,14 @@
 defmodule CashuTest do
   use ExUnit.Case
-  doctest Cashu
+
+  alias Cashu.Token
 
   describe "Serialization" do
     setup do
       serialized_token =
         "cashuAeyJtZW1vIjoiVGhhbmsgeW91IiwidG9rZW4iOlt7Im1pbnQiOiJodHRwczovL2Nvb2wtbWludC5uZXQiLCJwcm9vZnMiOlt7IkMiOiIwMmJjOTA5Nzk5N2Q4MWFmYjJjYzczNDZiNWU0MzQ1YTkzNDZiZDJhNTA2ZWI3OTU4NTk4YTcyZjBjZjg1MTYzZWEiLCJhbW91bnQiOjIsImlkIjoiMDA5YTFmMjkzMjUzZTQxZSIsInNlY3JldCI6IjQwNzkxNWJjMjEyYmU2MWE3N2UzZTZkMmFlYjRjNzI3OTgwYmRhNTFjZDA2YTZhZmMyOWUyODYxNzY4YTc4MzcifV19XSwidW5pdCI6InNhdCJ9"
 
-      token = %Cashu.Token{
+      token = %Token{
         token: [
           %{
             mint: "https://cool-mint.net",
@@ -32,7 +33,7 @@ defmodule CashuTest do
       serialized_token: serialized_token,
       token: token
     } do
-      {:ok, serialized} = Cashu.Token.serialize(token)
+      {:ok, serialized} = Token.serialize(token)
       assert serialized == serialized_token
     end
 
@@ -40,8 +41,7 @@ defmodule CashuTest do
       serialized_token: serialized_token,
       token: token
     } do
-      {:ok, token_map} = Cashu.Token.decode(serialized_token)
-      deserialized = Cashu.Token.new(token_map)
+      {:ok, deserialized} = Token.deserialize(serialized_token)
       assert deserialized == token
     end
   end

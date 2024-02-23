@@ -47,9 +47,11 @@ defmodule Cashu.Validator do
       %{"mint" => mint_url, "proofs" => proofs} = items
 
       case validate_url(mint_url) do
-        {:error, reason} -> Error.new(reason)
+        {:error, reason} ->
+          Error.new(reason)
+
         {:ok, _} ->
-          case  validate_proofs(proofs) do
+          case validate_proofs(proofs) do
             %{error: errors} -> {:error, errors}
             %{ok: valid_proofs} -> {:ok, valid_proofs}
             _ -> {:error, "bad return"}
@@ -62,7 +64,8 @@ defmodule Cashu.Validator do
   def validate_proofs([], acc), do: acc
 
   def validate_proofs([head | tail], acc) do
-    new_acc = head
+    new_acc =
+      head
       |> Proof.validate()
       |> collect_proof_results(acc)
 
@@ -70,12 +73,13 @@ defmodule Cashu.Validator do
   end
 
   defp collect_proof_results({key, value}, acc) do
-    new_list = [ value | Map.get(acc, key) ]
+    new_list = [value | Map.get(acc, key)]
     Map.put(acc, key, new_list)
   end
 
   @doc """
   take a string key map, and a target struct, and try to add its values to the matching struct fields.
+  Only operates on top level keys.
   """
   def map_string_to_atom(source_map, target_struct) do
     source_keys = Map.keys(source_map)

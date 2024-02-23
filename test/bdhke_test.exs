@@ -4,7 +4,7 @@ defmodule BDHKETest do
   alias Bitcoinex.Secp256k1.{Math, Point, PrivateKey}
   alias Cashu.BDHKE
 
-  setup_all do
+  setup do
     secret_message = "supersecretmsg"
 
     secret_point = %Point{
