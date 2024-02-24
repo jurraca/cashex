@@ -6,8 +6,6 @@ defmodule Cashu.Validator do
   Cashu.Error return values are constructed upstream, usually from these error values.
   """
 
-  alias Cashu.{Error, Proof}
-
   def validate_amount(amount) when is_integer(amount) and amount >= 0, do: {:ok, amount}
   def validate_amount(_), do: {:error, "Invalid amount"}
 
@@ -39,42 +37,6 @@ defmodule Cashu.Validator do
       %URI{scheme: nil} -> {:error, "no http scheme provided"}
       _ -> {:error, "could not parse mint URL"}
     end
-  end
-
-  def validate_token_list(tokens) do
-    tokens
-    |> Enum.map(fn items ->
-      %{"mint" => mint_url, "proofs" => proofs} = items
-
-      case validate_url(mint_url) do
-        {:error, reason} ->
-          Error.new(reason)
-
-        {:ok, _} ->
-          case validate_proofs(proofs) do
-            %{error: errors} -> {:error, errors}
-            %{ok: valid_proofs} -> {:ok, valid_proofs}
-            _ -> {:error, "bad return"}
-          end
-      end
-    end)
-  end
-
-  def validate_proofs(list, acc \\ %{})
-  def validate_proofs([], acc), do: acc
-
-  def validate_proofs([head | tail], acc) do
-    new_acc =
-      head
-      |> Proof.validate()
-      |> collect_proof_results(acc)
-
-    validate_proofs(tail, new_acc)
-  end
-
-  defp collect_proof_results({key, value}, acc) do
-    new_list = [value | Map.get(acc, key)]
-    Map.put(acc, key, new_list)
   end
 
   @doc """

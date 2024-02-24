@@ -3,7 +3,7 @@ defmodule CashuTest do
 
   alias Cashu.Token
 
-  describe "Serialization" do
+  describe "" do
     setup do
       serialized_token =
         "cashuAeyJtZW1vIjoiVGhhbmsgeW91IiwidG9rZW4iOlt7Im1pbnQiOiJodHRwczovL2Nvb2wtbWludC5uZXQiLCJwcm9vZnMiOlt7IkMiOiIwMmJjOTA5Nzk5N2Q4MWFmYjJjYzczNDZiNWU0MzQ1YTkzNDZiZDJhNTA2ZWI3OTU4NTk4YTcyZjBjZjg1MTYzZWEiLCJhbW91bnQiOjIsImlkIjoiMDA5YTFmMjkzMjUzZTQxZSIsInNlY3JldCI6IjQwNzkxNWJjMjEyYmU2MWE3N2UzZTZkMmFlYjRjNzI3OTgwYmRhNTFjZDA2YTZhZmMyOWUyODYxNzY4YTc4MzcifV19XSwidW5pdCI6InNhdCJ9"
@@ -29,6 +29,16 @@ defmodule CashuTest do
       {:ok, %{token: token, serialized_token: serialized_token}}
     end
 
+    test "create a new token", %{token: token} do
+      tokens_list = token.token
+      unit = token.unit
+      memo = token.memo
+
+      new_token = Token.new(tokens_list, unit, memo)
+
+      assert new_token == token
+    end
+
     test "serializes token into base64_urlsafe string", %{
       serialized_token: serialized_token,
       token: token
@@ -44,6 +54,10 @@ defmodule CashuTest do
       {:ok, deserialized} = Token.deserialize(serialized_token)
       assert deserialized == token
     end
+
+    ## test errors when creating new token
+    ## test error return invalid proofs, single and multiple
+    ## test jason decode failure handling
   end
 
   describe "Error handling" do
