@@ -7,10 +7,10 @@ defmodule Cashu.Keyset do
   defstruct [:id, :unit, :active]
 
   @type keyset() :: %{
-    id: String.t(),
-    unit: String.t(),
-    active: boolean()
-  }
+          id: String.t(),
+          unit: String.t(),
+          active: boolean()
+        }
 
   alias Bitcoinex.Secp256k1.Point
 
@@ -22,7 +22,8 @@ defmodule Cashu.Keyset do
       |> Map.values()
       |> Enum.join()
 
-    id = :crypto.hash(:sha256, pubkey_concat)
+    id =
+      :crypto.hash(:sha256, pubkey_concat)
       |> Base.encode16(case: :lower)
       |> String.slice(0..14)
 
