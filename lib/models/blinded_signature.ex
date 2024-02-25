@@ -9,6 +9,12 @@ defmodule Cashu.BlindedSignature do
   @derive Jason.Encoder
   defstruct [:amount, :id, :c_]
 
+  @type t :: %__MODULE__{
+          amount: pos_integer(),
+          id: String.t(),
+          c_: String.t()
+        }
+
   def new(blinded_message, mint_privkey) do
     case BDHKE.sign_blinded_point(blinded_message, mint_privkey) do
       {:ok, commitment_point, e, s} ->

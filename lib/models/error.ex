@@ -1,8 +1,14 @@
 defmodule Cashu.Error do
-  @typedoc "A Cashu error response"
-  @type t() :: %__MODULE__{}
+  @moduledoc """
+  The Cashu error interface. Code meanings tbd.
+  """
 
   defstruct [:detail, :code]
+  @typedoc "A Cashu error response"
+  @type t() :: %__MODULE__{
+          detail: String.t(),
+          code: non_neg_integer()
+        }
 
   @spec new(String.t()) :: t()
   def new(reason) when is_binary(reason) do

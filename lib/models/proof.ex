@@ -9,8 +9,8 @@ defmodule Cashu.Proof do
   @derive Jason.Encoder
   defstruct [:amount, :id, :secret, :C]
 
-  @type t() :: %{
-          amount: integer(),
+  @type t :: %__MODULE__{
+          amount: pos_integer(),
           id: String.t(),
           secret: String.t(),
           C: String.t()

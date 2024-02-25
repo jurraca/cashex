@@ -6,7 +6,7 @@ defmodule Cashu.Keyset do
   @derive Jason.Encoder
   defstruct [:id, :unit, :active]
 
-  @type keyset() :: %{
+  @type t :: %__MODULE__{
           id: String.t(),
           unit: String.t(),
           active: boolean()

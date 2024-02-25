@@ -9,6 +9,12 @@ defmodule Cashu.BlindedMessage do
   @derive Jason.Encoder
   defstruct [:amount, :id, :b_]
 
+  @type t :: %__MODULE__{
+          amount: pos_integer(),
+          id: String.t(),
+          b_: String.t()
+        }
+
   def new(amount, secret_message) when is_integer(amount) and is_binary(secret_message) do
     case BDHKE.blind_point(secret_message) do
       {:ok, blind_point, blinding_factor} ->

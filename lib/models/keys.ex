@@ -9,10 +9,10 @@ defmodule Cashu.Keys do
   defstruct [:id, :unit, :keys]
 
   @type mint_pubkeys() :: %{
-          required(Integer.t()) => String.t()
+          required(pos_integer()) => String.t()
         }
 
-  @type t() :: %{
+  @type t :: %__MODULE__{
           id: String.t(),
           unit: String.t(),
           keys: mint_pubkeys()

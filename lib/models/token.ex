@@ -10,7 +10,7 @@ defmodule Cashu.Token do
   @derive Jason.Encoder
   defstruct [:token, :unit, :memo]
 
-  @type t() :: %{
+  @type t :: %__MODULE__{
           token: [%{mint: String.t(), proofs: [Proof.t()]}],
           unit: String.t() | nil,
           memo: String.t() | nil
@@ -112,7 +112,7 @@ defmodule Cashu.Token do
     {:ok, struct(__MODULE__, token: tokens, unit: unit, memo: memo)}
   end
 
-  def from_string_map(err), do: {:error, "Invalid token provided"}
+  def from_string_map(_err), do: {:error, "Invalid token provided"}
 
   def handle_errors(errors) do
     if Enum.count(errors) > 1 do
