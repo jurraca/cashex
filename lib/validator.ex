@@ -25,7 +25,7 @@ defmodule Cashu.Validator do
   def validate_c_(_), do: {:error, "Invalid c_"}
 
   def validate_unit("sat"), do: {:ok, "sat"}
-  def validate_unit?(_), do: {:error, "Invalid currency unit: sats only bb"}
+  def validate_unit(_), do: {:error, "Invalid currency unit: sats only bb"}
 
   def validate_memo(memo) when is_binary(memo), do: {:ok, memo}
   def validate_memo(_), do: {:error, "Invalid memo: not a string"}
@@ -38,6 +38,15 @@ defmodule Cashu.Validator do
       _ -> {:error, "could not parse mint URL"}
     end
   end
+
+  def validate_keyset_id("00" <> keyset_id) do
+    case String.length(keyset_id) == 14 do
+      true -> {:ok, keyset_id}
+      false -> {:error, "Invalid keyset ID length, got: #{keyset_id}"}
+    end
+  end
+
+  def validate_keyset_id(keyset_id), do: {:error, "Invalid Keyset ID version prefix, got: #{keyset_id}"}
 
   @doc """
   take a string key map, and a target struct, and try to add its values to the matching struct fields.

@@ -8,6 +8,8 @@ defmodule Cashu.Keys do
   @derive Jason.Encoder
   defstruct [:id, :unit, :keys]
 
+  alias Cashu.Keyset
+
   @type mint_pubkeys() :: %{
           required(pos_integer()) => String.t()
         }
@@ -31,5 +33,9 @@ defmodule Cashu.Keys do
   @spec get_supported_units() :: [Integer.t()]
   def get_supported_units() do
     get_mint_pubkeys() |> Map.keys()
+  end
+
+  def valid_id?(%__MODULE__{id: id, keys: keys}) do
+    id == Keyset.derive_keyset_id(keys)
   end
 end
