@@ -37,6 +37,8 @@ defmodule Cashu.BlindedSignature do
     end
   end
 
+  def validate_sig_list(list), do: Validator.validate_list(list, &validate/1)
+
   def encode(%__MODULE__{} = msg) do
     case Jason.encode(msg) do
       {:ok, encoded} ->

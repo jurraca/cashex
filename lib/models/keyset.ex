@@ -38,11 +38,11 @@ defmodule Cashu.Keyset do
 
   def validate(%__MODULE__{id: id, unit: unit, active: active} = keyset) do
     with true <- is_boolean(active),
-      {:ok, _} <- Validator.validate_unit(unit),
-      {:ok, _} <- Validator.validate_keyset_id(id) do
+         {:ok, _} <- Validator.validate_unit(unit),
+         {:ok, _} <- Validator.validate_keyset_id(id) do
       {:ok, keyset}
-      else
-        {:error, reason} -> Error.new(reason)
+    else
+      {:error, reason} -> Error.new(reason)
     end
   end
 

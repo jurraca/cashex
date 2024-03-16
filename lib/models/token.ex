@@ -131,23 +131,10 @@ defmodule Cashu.Token do
 
       case validate_url(mint_url) do
         {:error, _} = err -> err
-        {:ok, _} -> validate_proofs(proofs)
+        {:ok, _} -> Proof.validate_proof_list(proofs)
       end
     end)
     |> collect_token_validations()
-  end
-
-  def validate_proofs(list, acc \\ %{ok: [], error: []})
-  def validate_proofs([], %{ok: ok_proofs, error: []}), do: {:ok, ok_proofs}
-  def validate_proofs([], %{ok: _, error: errors}), do: {:error, errors}
-
-  def validate_proofs([head | tail], acc) do
-    new_acc =
-      head
-      |> Proof.validate()
-      |> collect_results(acc)
-
-    validate_proofs(tail, new_acc)
   end
 
   defp collect_token_validations(list, acc \\ %{ok: [], error: []})
@@ -155,14 +142,7 @@ defmodule Cashu.Token do
   defp collect_token_validations([], %{ok: _, error: errors}), do: {:error, errors}
 
   defp collect_token_validations([head | tail], acc) do
-    collect_results(head, acc)
-    collect_token_validations(tail, acc)
-  end
-
-  # an accumulator map with :ok and :error keys and a list as values
-  defp collect_results({key, value}, acc) do
-    acc_val = Map.get(acc, key)
-    new_list = [value | acc_val]
-    Map.put(acc, key, new_list)
+    new_acc = Validator.collect_results(head, acc)
+    collect_token_validations(tail, new_acc)
   end
 end

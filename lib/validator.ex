@@ -49,6 +49,27 @@ defmodule Cashu.Validator do
   def validate_keyset_id(keyset_id), do: {:error, "Invalid Keyset ID version prefix, got: #{keyset_id}"}
 
   @doc """
+  Validate a list of structs and collect the results into a map of ok/error tuples.
+  We do this often in Cashu: validate a list of Proofs, a list of BlindedSignatures, Tokens, etc.
+  We usually want to reject the whole set if an error occurs in one of them.
+  """
+  def validate_list(list, validate_fun, acc \\ %{ok: [], error: []})
+  def validate_list([], _validate_fun, %{ok: ok_proofs, error: []}), do: {:ok, ok_proofs}
+  def validate_list([], _validate_fun, %{ok: _, error: errors}), do: {:error, errors}
+
+  def validate_list([head | tail], validate_fun, acc) do
+    new_acc = validate_fun.(head) |> collect_results(acc)
+    validate_list(tail, new_acc)
+  end
+
+  # an accumulator map with :ok and :error keys and a list as values
+  def collect_results({key, value}, acc) do
+    acc_val = Map.get(acc, key)
+    new_list = [value | acc_val]
+    Map.put(acc, key, new_list)
+  end
+
+  @doc """
   take a string key map, and a target struct, and try to add its values to the matching struct fields.
   Only operates on top level keys.
   """

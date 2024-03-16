@@ -36,6 +36,8 @@ defmodule Cashu.BlindedMessage do
     end
   end
 
+  def validate_bm_list(list), do: Validator.validate_list(list, &validate/1)
+
   def encode(%__MODULE__{} = msg) do
     case Jason.encode(msg) do
       {:ok, encoded} ->
