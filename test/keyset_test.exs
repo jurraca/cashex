@@ -16,6 +16,6 @@ defmodule KeysetTest do
 
   test "generate a keyset ID from a set of keys", %{keys: keys} do
     id = Keyset.derive_keyset_id(keys)
-    assert Keys.valid_id?(%Keys{id: id, unit: "sat", keys: keys})
+    assert Keyset.valid_id?(%Keyset{id: id, unit: "sat", keys: keys})
   end
 end
