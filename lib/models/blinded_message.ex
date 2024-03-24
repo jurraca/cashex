@@ -17,7 +17,7 @@ defmodule Cashu.BlindedMessage do
 
   def new(amount, secret_message) when is_integer(amount) and is_binary(secret_message) do
     case BDHKE.blind_point(secret_message) do
-      {:ok, blind_point, blinding_factor} ->
+      {:ok, blind_point, _blinding_factor} ->
         hex_point = Point.serialize_public_key(blind_point)
         %__MODULE__{amount: amount, id: nil, b_: hex_point}
 

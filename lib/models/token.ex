@@ -3,7 +3,7 @@ defmodule Cashu.Token do
     Create and decode tokens.
     Format: cashu[version][base64_token_json]
   """
-  alias Cashu.{Error, Proof, Validator}
+  alias Cashu.{Error, Parser, Proof, Validator}
   import Validator
   require Logger
 
@@ -102,7 +102,7 @@ defmodule Cashu.Token do
           tk
           |> Map.get("proofs")
           |> Enum.map(fn p ->
-            Validator.map_string_to_atom(p, %Proof{})
+            Parser.map_string_to_atom(p, %Proof{})
           end)
 
         new = Map.new(proofs: proofs_atoms, mint: tk["mint"])
