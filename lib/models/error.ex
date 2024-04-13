@@ -16,6 +16,10 @@ defmodule Cashu.Error do
     {:error, %__MODULE__{detail: reason, code: 0}}
   end
 
+  def new(%Jason.EncodeError{message: msg}) do
+    {:error, %__MODULE__{detail: "JasonEncodeError: " <> msg, code: 2}}
+  end
+
   # a generic case to passthrough the ok result and create the error.
   def check(result) do
     case result do

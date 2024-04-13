@@ -3,9 +3,11 @@ defmodule Cashu.Token do
     Create and decode tokens.
     Format: cashu[version][base64_token_json]
   """
-  alias Cashu.{Error, Parser, Proof, Validator}
+  alias Cashu.{Error, BaseParser, Proof, Serde, Validator}
   import Validator
   require Logger
+
+  @behaviour Serde
 
   @derive Jason.Encoder
   defstruct [:token, :unit, :memo]
@@ -19,7 +21,7 @@ defmodule Cashu.Token do
   @doc """
   Create a new Cashu.Token struct from a list of Proofs, a unit, and optional memo.
   """
-  def new(tokens_list, unit, memo \\ "") do
+  def new(tokens_list, unit, memo \\ "") when is_list(tokens_list) and is_binary(unit) do
     %__MODULE__{
       token: tokens_list,
       unit: unit,
@@ -31,35 +33,62 @@ defmodule Cashu.Token do
     new(tokens_list, unit, memo)
   end
 
-  @doc """
-  Create a serialized Cashu token from a `%Token{}` struct.
-  """
-  def serialize(%__MODULE__{} = token, version \\ "A") do
-    case encode(token) do
+  @impl Serde
+  def serialize(token, version \\ "A")
+  def serialize(%__MODULE__{} = token, version) do
+    case Jason.encode(token) do
       {:ok, encoded} ->
         serialized = Base.url_encode64(encoded, padding: false)
         {:ok, "cashu" <> version <> serialized}
 
-      {:error, err} ->
-        Error.new(err)
+      {:error, reason} ->
+        Error.new(reason)
     end
   end
 
-  @doc """
-  Deserialize a Cashu token.
-  """
+  def serialize(_, _), do: {:error, :invalid_token}
+
+  @impl Serde
   def deserialize(<<"cashu", version::binary-size(1), token::binary>>) do
     if(version != "A", do: Logger.info("Got cashu token version #{version}"))
 
     case Base.url_decode64(token, padding: false) do
-      {:ok, json} -> decode(json)
+      {:ok, json} -> Jason.decode!(json) |> parse_nested()
       :error -> Error.new("could not decode token from binary #{token}")
     end
+  end
+
+  def deserialize(_), do: {:error, "Invalid binary"}
+
+  @doc """
+  Takes a cashu token struct with string keys, the default behavior when deserializing JSON,
+  and returns a valid Cashu.Token struct.
+  """
+  def parse_nested(binary) when is_binary(binary) do
+    case BaseParser.deserialize(binary) do
+      {:ok, %__MODULE__{} = tk} -> parse_nested(tk)
+    end
+  end
+
+  def parse_nested(%{"token" => token, "unit" => unit, "memo" => memo}) do
+    tokens =
+      Enum.reduce(token, [], fn proofs, acc ->
+        proofs_atoms = proofs_to_struct(proofs)
+        new = Map.new(proofs: proofs_atoms, mint: proofs["mint"])
+        [new | acc]
+      end)
+
+    {:ok, struct(__MODULE__, token: tokens, unit: unit, memo: memo)}
+  end
+
+  def proofs_to_struct(%{"proofs" => proofs}) do
+    Enum.map(proofs, fn p -> BaseParser.string_map_to_struct(p, %Proof{}) end)
   end
 
   @doc """
   Validate a token's content.
   """
+  #@impl Serde
   def validate(%__MODULE__{token: token_list, unit: unit, memo: memo} = token) do
     with {:ok, _valid_proofs} <- validate_token_list(token_list),
          {:ok, _} <- validate_unit(unit),
@@ -73,46 +102,6 @@ defmodule Cashu.Token do
 
   def validate({:error, _} = err), do: err
   def validate(_), do: {:error, "Invalid token provided"}
-
-  defp encode(%__MODULE__{} = token) do
-    Jason.encode(token)
-  end
-
-  defp decode(json_str) do
-    case Jason.decode(json_str) do
-      {:ok, map} ->
-        case from_string_map(map) do
-          {:ok, token} -> validate(token)
-          {:error, _} = err -> err
-        end
-
-      {:error, _} = err ->
-        err
-    end
-  end
-
-  @doc """
-  Takes a cashu token struct with string keys, the default behavior when deserializing JSON,
-  and returns a valid Cashu.Token struct.
-  """
-  def from_string_map(%{"token" => token, "unit" => unit, "memo" => memo}) do
-    tokens =
-      Enum.reduce(token, [], fn tk, acc ->
-        proofs_atoms =
-          tk
-          |> Map.get("proofs")
-          |> Enum.map(fn p ->
-            Parser.map_string_to_atom(p, %Proof{})
-          end)
-
-        new = Map.new(proofs: proofs_atoms, mint: tk["mint"])
-        [new | acc]
-      end)
-
-    {:ok, struct(__MODULE__, token: tokens, unit: unit, memo: memo)}
-  end
-
-  def from_string_map(_err), do: {:error, "Invalid token provided"}
 
   def handle_errors(errors) do
     if Enum.count(errors) > 1 do

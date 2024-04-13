@@ -43,18 +43,6 @@ defmodule Cashu.Proof do
   def validate(_), do: {:error, "Invalid %Proof{} struct found."}
 
   def validate_proof_list(list), do: Validator.validate_list(list, &validate/1)
-  # def validate_proof_list(list, acc \\ %{ok: [], error: []})
-  # def validate_proof_list([], %{ok: ok_proofs, error: []}), do: {:ok, ok_proofs}
-  # def validate_proof_list([], %{ok: _, error: errors}), do: {:error, errors}
-  #
-  # def validate_proof_list([head | tail], acc) do
-  #   new_acc =
-  #     head
-  #     |> validate()
-  #     |> Validator.collect_results(acc)
-  #
-  #   validate_proof_list(tail, new_acc)
-  # end
 
   def encode(%__MODULE__{} = msg) do
     case Jason.encode(msg) do

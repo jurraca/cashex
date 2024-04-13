@@ -3,8 +3,10 @@ defmodule Cashu.BlindedSignature do
   NUT-00: BlindedSignature
   A BlindedSignature is sent from Bob to Alice after minting tokens or after swapping tokens. A BlindedSignature is also called a promise.
   """
-  alias Cashu.{BDHKE, Error, Validator}
+  alias Cashu.{BaseParser, BDHKE, Error, Validator}
   alias Bitcoinex.Secp256k1.Point
+
+  @behaviour Cashu.Serde
 
   @derive Jason.Encoder
   defstruct [:amount, :id, :c_]
@@ -39,13 +41,9 @@ defmodule Cashu.BlindedSignature do
 
   def validate_sig_list(list), do: Validator.validate_list(list, &validate/1)
 
-  def encode(%__MODULE__{} = msg) do
-    case Jason.encode(msg) do
-      {:ok, encoded} ->
-        {:ok, encoded}
+  @impl Cashu.Serde
+  def serialize(sig), do: BaseParser.serialize(sig)
 
-      {:error, reason} ->
-        Error.new(reason)
-    end
-  end
+  @impl Cashu.Serde
+  def deserialize(binary), do: BaseParser.deserialize(binary, %__MODULE__{})
 end

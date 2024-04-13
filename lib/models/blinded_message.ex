@@ -3,8 +3,10 @@ defmodule Cashu.BlindedMessage do
   NUT-00: BlindedMessage
   An encrypted ("blinded") secret and an amount is sent from Alice to Bob for minting tokens or for swapping tokens. A BlindedMessage is also called an output.
   """
-  alias Cashu.{BDHKE, Error, Validator}
+  alias Cashu.{BaseParser, BDHKE, Error, Validator}
   alias Bitcoinex.Secp256k1.Point
+
+  @behaviour Cashu.Serde
 
   @derive Jason.Encoder
   defstruct [:amount, :id, :b_]
@@ -38,13 +40,9 @@ defmodule Cashu.BlindedMessage do
 
   def validate_bm_list(list), do: Validator.validate_list(list, &validate/1)
 
-  def encode(%__MODULE__{} = msg) do
-    case Jason.encode(msg) do
-      {:ok, encoded} ->
-        {:ok, encoded}
+  @impl Cashu.Serde
+  def serialize(bm), do: BaseParser.serialize(bm)
 
-      {:error, reason} ->
-        Error.new(reason)
-    end
-  end
+  @impl Cashu.Serde
+  def deserialize(binary), do: BaseParser.deserialize(binary, %__MODULE__{})
 end

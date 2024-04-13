@@ -1,22 +1,29 @@
-defmodule Cashu.Parser do
+defmodule Cashu.BaseParser do
+
+  @doc """
+  Default serialize to JSON.
+  """
+  def serialize(data) when is_map(data), do: Jason.encode(data)
 
   @doc """
   Parse an incoming API response, and attempt to decode it, and return its internal struct representation.
   """
-  def parse_response(resp, struct) when is_binary(resp) do
+  def deserialize(resp, struct) when is_binary(resp) do
     case Jason.decode(resp) do
-      {:ok, decoded} -> map_string_to_atom(decoded, struct)
+      {:ok, decoded} -> string_map_to_struct(decoded, struct)
       {:error, reason} -> Cashu.Error.new(reason)
     end
   end
 
-  def parse_response(_resp, _struct), do: Cashu.Error.new("response was not a binary.")
+  def deserialize(_resp, _struct), do: Cashu.Error.new("response was not a binary.")
+
+  def deserialize(resp) when is_binary(resp), do: Jason.decode(resp)
 
   @doc """
   Take a string key map, and a target struct, and try to add its values to the matching struct fields.
   Only operates on top level keys.
   """
-  def map_string_to_atom(source_map, target_struct) do
+  def string_map_to_struct(source_map, target_struct) do
     source_keys = Map.keys(source_map)
     target_keys = Map.keys(target_struct)
 
